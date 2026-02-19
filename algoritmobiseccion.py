@@ -15,33 +15,55 @@ def algoritmo_biseccion(f, a, b, precision, m):
     - Fracaso: "No se logró lo deseado"
     """
     
-    # Paso 0: Sea i = 1, FA = f(a)
+    # Explicar qué significa cada columna
+    print("\nEXPLICACI\u00d3N DE LAS COLUMNAS:")
+    print("n      = Número de iteración")
+    print("An     = Extremo izquierdo del intervalo")
+    print("Bn     = Extremo derecho del intervalo") 
+    print("f(An)  = Función evaluada en An")
+    print("f(Bn)  = Función evaluada en Bn")
+    print("Pn     = Punto medio del intervalo")
+    print("f(Pn)  = Función evaluada en el punto medio")
+    print()
+    
+    # Imprimir encabezados de la tabla
+    print(f"{'n':<3} {'An':<12} {'Bn':<12} {'f(An)':<12} {'f(Bn)':<12} {'Pn':<12} {'f(Pn)':<12}")
+    print("-" * 85)
+    
+    # Inicialización
     i = 1
     FA = f(a)
+    FB = f(b)
     
-    # Paso 1: Mientras i <= m, haga de 2 a 5
+    # Iteraciones del método de bisección
     while i <= m:
         
-        # Paso 2: Sea p = a + (b-a)/2, fp = f(p)
+        # Calcular punto medio
         p = a + (b - a) / 2
         fp = f(p)
         
-        # Paso 3: Si fp = 0 ó (b-a)/2 < precisión entonces salida (Éxito)
+        # Imprimir fila de la tabla para esta iteración
+        print(f"{i:<3} {a:<12.6f} {b:<12.6f} {FA:<12.6f} {FB:<12.6f} {p:<12.6f} {fp:<12.6f}")
+        
+        # Verificar criterio de convergencia
         if fp == 0 or (b - a) / 2 < precision:
+            print(f"\nÉXITO: Se obtuvo una aproximación de P = {p:.6f}")
             return p
         
-        # Paso 4: Sea i = i + 1
-        i = i + 1
-        
-        # Paso 5: Si (FA)(FP) > 0 -> Entonces: a = p, en caso contrario b = p
+        # Actualizar intervalo
         if FA * fp > 0:
             a = p
             FA = fp
         else:
             b = p
+            FB = fp
+        
+        # Incrementar contador
+        i = i + 1
     
-    # Paso 6: Salida (FRACASO)
-    return "No se logró lo deseado"
+    # Si se alcanzó el máximo de iteraciones sin convergencia
+    print(f"\nFRACASO: No se logró la precisión deseada después de {m} iteraciones")
+    return None
 
 def definir_funcion():
     """Permite al usuario definir una función matemática"""
@@ -82,15 +104,7 @@ def main():
     m = int(input("Máximo de iteraciones: "))
     
     # Ejecutar algoritmo
-    resultado = algoritmo_biseccion(f, a, b, precision, m)
-    
-    # Mostrar resultado
-    print("\nRESULTADO:")
-    if isinstance(resultado, str):
-        print(resultado)
-    else:
-        print(f"Solución aproximada: {resultado}")
-        print(f"f({resultado}) = {f(resultado)}")
+    algoritmo_biseccion(f, a, b, precision, m)
 
 if __name__ == "__main__":
     main()
