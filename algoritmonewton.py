@@ -1,20 +1,21 @@
 import math
+import sympy as sp
 
 
-def algoritmo_newton(f, df, p0, tolerancia, N0):
+def algoritmo_newton(f_func, df_func, p0, tolerancia, N0):
     """
     Algoritmo del Método de Newton-Raphson para encontrar raíces de una función.
 
     Entradas:
-    - f        : Función f(x) de la cual se busca la raíz f(p) = 0
-    - df       : Derivada f'(x) de la función
+    - f_func   : Función f(x) evaluable numéricamente
+    - df_func  : Derivada f'(x) evaluable numéricamente (calculada automáticamente)
     - p0       : Aproximación inicial
-    - presición: Tolerancia (precisión deseada)
-    - M        : Número máximo de iteraciones
+    - tolerancia: Tolerancia (precisión deseada)
+    - N0       : Número máximo de iteraciones
 
     Salidas:
-    - Éxito: Se obtuvo una aproximación deseada al punto fijo
-    - Fracaso: Despues de M iteraciones NO se logro la presición deseada :(
+    - Éxito: Solución aproximada p
+    - Fracaso: No se logro la precision deseada
     """
 
     print("\nEXPLICACIÓN DE LAS COLUMNAS:")
@@ -32,12 +33,12 @@ def algoritmo_newton(f, df, p0, tolerancia, N0):
     i = 1
     while i <= N0:
 
-        fp0  = f(p0)
-        dfp0 = df(p0)
+        fp0  = f_func(p0)
+        dfp0 = df_func(p0)
 
-        # Verificar que la derivada no sea cero (el método fallaría)
-        if dfp0 == 0:
-            print(f"\nFRACASO: La derivada f'(p0) = 0 en p0 = {p0:.10f}.")
+        # Verificar que la derivada no sea cero
+        if abs(dfp0) < 1e-15:
+            print(f"\nFRACASO: La derivada f'(p0) ≈ 0 en p0 = {p0:.10f}.")
             print("         El método de Newton no puede continuar (división por cero).")
             return None
 
@@ -61,29 +62,35 @@ def algoritmo_newton(f, df, p0, tolerancia, N0):
     return None
 
 
-def definir_funcion(nombre, descripcion):
-    """Permite al usuario definir una función matemática"""
-    print(f"\nIngrese la función {descripcion}")
+def definir_funcion():
+    """
+    Permite al usuario ingresar f(x) como texto.
+    Usa sympy para calcular la derivada simbólica automáticamente.
+    Retorna versiones numéricas de f y f' listas para evaluar.
+    """
+    print("\nIngrese la función f(x)")
     print("Puede usar: sin, cos, tan, exp, log, sqrt, x**n, +, -, *, /, (), etc.")
 
-    expresion = input(f"{nombre}(x) = ")
+    expresion = input("f(x) = ")
 
-    def func(x):
-        return eval(expresion, {
-            "__builtins__": {},
-            "x": x,
-            "sin": math.sin,
-            "cos": math.cos,
-            "tan": math.tan,
-            "exp": math.exp,
-            "log": math.log,
-            "sqrt": math.sqrt,
-            "pi": math.pi,
-            "e":  math.e,
-            "abs": abs
-        })
+    # Variable simbólica
+    x = sp.Symbol('x')
 
-    return func
+    # Parsear la expresión con sympy
+    f_sym  = sp.sympify(expresion)
+
+    # Calcular la derivada simbólicamente (automático)
+    df_sym = sp.diff(f_sym, x)
+
+    # Mostrar la derivada calculada
+    print(f"\nDerivada:")
+    print(f"f'(x) = {df_sym}")
+
+    # Convertir a funciones numéricas evaluables
+    f_func  = sp.lambdify(x, f_sym,  modules=["math"])
+    df_func = sp.lambdify(x, df_sym, modules=["math"])
+
+    return f_func, df_func
 
 
 def main():
@@ -94,11 +101,10 @@ def main():
     print("Objetivo: Encontrar p tal que f(p) = 0")
     print("Fórmula:  p_n = p_{n-1} - f(p_{n-1}) / f'(p_{n-1})")
     print()
-    print("IMPORTANTE: Necesita ingresar tanto f(x) como su derivada f'(x).")
+    print("La derivada f'(x) se calcula AUTOMÁTICAMENTE.")
 
-    # Definir f(x) y f'(x)
-    f  = definir_funcion("f",  "f(x)  — función original")
-    df = definir_funcion("f'", "f'(x) — derivada de f(x)")
+    # Definir f(x) — la derivada se calcula sola
+    f_func, df_func = definir_funcion()
 
     # Solicitar parámetros
     print("\nIngrese los parámetros del método:")
@@ -111,7 +117,7 @@ def main():
     print(f"Iterando con p0 = {p0}, tolerancia = {tolerancia}, max iter = {N0}")
     print(f"{'='*97}")
 
-    algoritmo_newton(f, df, p0, tolerancia, N0)
+    algoritmo_newton(f_func, df_func, p0, tolerancia, N0)
 
 
 if __name__ == "__main__":
