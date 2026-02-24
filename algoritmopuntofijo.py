@@ -12,8 +12,8 @@ def algoritmo_punto_fijo(g, p0, tolerancia, N0):
     - M       : Número máximo de iteraciones
 
     Salidas:
-    - Éxito: Solución aproximada p
-    - Fracaso: None (con mensaje de error)
+    - Éxito: Se obtuvo una aproximación deseada al punto fijo
+    - Fracaso: Despues de M iteraciones NO se logro la presición deseada :(
     """
 
     print("\nEXPLICACIÓN DE LAS COLUMNAS:")
