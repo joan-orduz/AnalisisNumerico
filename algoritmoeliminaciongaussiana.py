@@ -1,44 +1,146 @@
+from fractions import Fraction
+
+# -----------------------------------
+# CONVERTIR NÚMERO
+# -----------------------------------
+def convertir_numero(valor):
+    """
+    Convierte un valor a número.
+    Acepta:
+    - enteros: 2, -5
+    - decimales: 2.5, -1.75
+    - fracciones: 1/2, -3/4
+    """
+    try:
+        return float(Fraction(valor))
+    except:
+        raise ValueError(f"Valor inválido: {valor}")
+
+
+# -----------------------------------
+# IMPRIMIR MATRIZ
+# -----------------------------------
 def imprimir_matriz(A):
-    print("Matriz actual:")
+    print("\nMatriz actual:")
     for fila in A:
         print(["{:.4f}".format(x) for x in fila])
     print()
 
 
+# -----------------------------------
+# LEER MATRIZ DESDE ARCHIVO
+# -----------------------------------
+def leer_matriz_desde_archivo(nombre_archivo):
+    A = []
+
+    try:
+        with open(nombre_archivo, "r") as archivo:
+            for linea in archivo:
+                if linea.strip() == "":
+                    continue
+
+                fila_texto = linea.strip().split()
+                fila = [convertir_numero(x) for x in fila_texto]
+                A.append(fila)
+
+    except FileNotFoundError:
+        print("Error: archivo no encontrado.")
+        return None
+    except ValueError as e:
+        print("Error en el archivo:", e)
+        return None
+
+    return A
+
+
+# -----------------------------------
+# LEER MATRIZ MANUALMENTE
+# -----------------------------------
+def leer_matriz_manual():
+    while True:
+        try:
+            n = int(input("\nIngrese el número de ecuaciones / variables: "))
+            if n <= 0:
+                print("Error: n debe ser mayor que 0.")
+                continue
+            break
+        except ValueError:
+            print("Error: debe ingresar un número entero.")
+
+    A = []
+
+    print("\nIngrese la matriz aumentada fila por fila.")
+    print(f"Cada fila debe tener {n+1} valores separados por espacio.")
+    print("Puede usar enteros, decimales o fracciones.")
+    print("Ejemplo: 2  -3.5  1/2  7\n")
+
+    for i in range(n):
+        while True:
+            try:
+                fila_texto = input(f"Fila {i+1}: ").split()
+
+                if len(fila_texto) != n + 1:
+                    print(f"Error: debe ingresar exactamente {n+1} valores.")
+                    continue
+
+                fila = [convertir_numero(x) for x in fila_texto]
+                A.append(fila)
+                break
+
+            except ValueError as e:
+                print("Error:", e)
+                print("Intente nuevamente.")
+
+    return A
+
+
+# -----------------------------------
+# VALIDAR MATRIZ
+# -----------------------------------
+def validar_matriz(A):
+    if A is None or len(A) == 0:
+        return False, "Error: la matriz está vacía."
+
+    n = len(A)
+
+    for fila in A:
+        if len(fila) != n + 1:
+            return False, "Error: la matriz debe ser de tamaño n x (n+1)."
+
+    return True, ""
+
+
+# -----------------------------------
+# ELIMINACIÓN GAUSSIANA
+# -----------------------------------
 def eliminacion_gaussiana(A):
     n = len(A)
 
-    # Verificar que la matriz sea n x (n+1)
-    for fila in A:
-        if len(fila) != n + 1:
-            return "Error: la matriz debe ser de tamaño n x (n+1)."
-
-    print("=== INICIO DEL PROCESO ===")
+    print("\n=== INICIO DEL PROCESO ===")
     imprimir_matriz(A)
 
-    # Eliminación gaussiana
+    # Eliminación hacia adelante
     for i in range(n - 1):
         print(f"Paso {i+1}: trabajar con la columna {i+1}")
 
-        # Buscar pivote
+        # Buscar pivote no nulo
         p = i
         while p < n and A[p][i] == 0:
             p += 1
 
-        # Si no hay pivote, no hay solución única
         if p == n:
             return "Fracaso: el sistema no tiene solución única."
 
         # Intercambiar filas si es necesario
         if p != i:
-            print(f"Intercambio de fila {i+1} con fila {p+1}")
+            print(f"Se intercambia la fila {i+1} con la fila {p+1}")
             A[i], A[p] = A[p], A[i]
             imprimir_matriz(A)
 
         # Eliminar debajo del pivote
         for j in range(i + 1, n):
             mji = A[j][i] / A[i][i]
-            print(f"Multiplicador m({j+1},{i+1}) = {A[j][i]:.4f} / {A[i][i]:.4f} = {mji:.4f}")
+            print(f"m({j+1},{i+1}) = {A[j][i]:.4f} / {A[i][i]:.4f} = {mji:.4f}")
 
             for k in range(i, n + 1):
                 A[j][k] = A[j][k] - mji * A[i][k]
@@ -50,7 +152,7 @@ def eliminacion_gaussiana(A):
     if A[n - 1][n - 1] == 0:
         return "Fracaso: el sistema no tiene solución única."
 
-    print("=== MATRIZ TRIANGULAR SUPERIOR OBTENIDA ===")
+    print("=== MATRIZ TRIANGULAR SUPERIOR ===")
     imprimir_matriz(A)
 
     # Sustitución hacia atrás
@@ -67,32 +169,44 @@ def eliminacion_gaussiana(A):
         x[i] = (A[i][n] - suma) / A[i][i]
         print(f"x{i+1} = ({A[i][n]:.4f} - {suma:.4f}) / {A[i][i]:.4f} = {x[i]:.4f}")
 
-    print("=== SOLUCIÓN FINAL ===")
+    print("\n=== SOLUCIÓN FINAL ===")
     for i in range(n):
         print(f"x{i+1} = {x[i]:.4f}")
 
     return x
 
 
-# ------------------------------
+# -----------------------------------
 # PROGRAMA PRINCIPAL
-# ------------------------------
+# -----------------------------------
+print("ELIMINACIÓN GAUSSIANA CON SUSTITUCIÓN HACIA ATRÁS")
+print("El programa acepta enteros, decimales y fracciones.\n")
 
-n = int(input("Ingrese el número de ecuaciones / variables: "))
+print("Seleccione la forma de ingreso de datos:")
+print("1. Leer matriz desde archivo")
+print("2. Ingresar matriz fila por fila")
 
-A = []
-print("Ingrese los coeficientes de la matriz aumentada fila por fila:")
-print("Debe ingresar", n + 1, "valores por cada fila")
+opcion = input("\nIngrese 1 o 2: ")
 
-for i in range(n):
-    fila = []
-    print(f"\nFila {i+1}:")
-    for j in range(n + 1):
-        valor = float(input(f"Ingrese A[{i+1}][{j+1}]: "))
-        fila.append(valor)
-    A.append(fila)
+if opcion == "1":
+    nombre_archivo = input("\nIngrese el nombre del archivo: ")
+    A = leer_matriz_desde_archivo(nombre_archivo)
 
+elif opcion == "2":
+    A = leer_matriz_manual()
+
+else:
+    print("Opción no válida.")
+    exit()
+
+# Validar matriz
+valida, mensaje = validar_matriz(A)
+if not valida:
+    print(mensaje)
+    exit()
+
+# Resolver sistema
 resultado = eliminacion_gaussiana(A)
 
-if type(resultado) == str:
-    print(resultado)
+if isinstance(resultado, str):
+    print("\n" + resultado)
