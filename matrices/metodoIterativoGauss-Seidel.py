@@ -61,46 +61,59 @@ def gauss_seidel(A, b, x0, tol, max_iter):
 
 
 # ─────────────────────────────────────────────
-# Carga matriz A y vector b desde archivo.
-# Formato: cada línea es una fila del sistema aumentado [A | b].
-# Los primeros n valores → fila de A, el último → componente de b.
-# Ejemplo (sistema 3x3):
-#     2  1 -1  8
-#    -3 -1  2 -11
-#    -2  1  2  -3
+# Carga matriz desde archivo.
+# Detecta automáticamente dos formatos:
+#   1. Matriz cuadrada N×N (solo A)
+#   2. Matriz aumentada N×(N+1) (A | b)
 # ─────────────────────────────────────────────
 def cargar_desde_archivo(ruta):
-    A = []
-    b = []
+    datos = []
     with open(ruta, "r") as f:
         for numero_linea, linea in enumerate(f, start=1):
             linea = linea.strip()
-            if not linea:          # ignorar líneas vacías
+            if not linea:
                 continue
             try:
                 valores = [float(v) for v in linea.split()]
             except ValueError:
                 raise ValueError(
-                    f"Línea {numero_linea}: se encontró un valor no numérico → '{linea}'"
+                    f"Línea {numero_linea}: valor no numérico en '{linea}'"
                 )
-            if len(valores) < 2:
-                raise ValueError(
-                    f"Línea {numero_linea}: se necesitan al menos 2 valores (coeficientes + término independiente)."
-                )
-            A.append(valores[:-1])
-            b.append(valores[-1])
+            if not valores:
+                continue
+            datos.append(valores)
 
-    if not A:
+    if not datos:
         raise ValueError("El archivo está vacío o no contiene datos válidos.")
 
-    n = len(A)
-    for i, fila in enumerate(A):
-        if len(fila) != n:
+    n = len(datos)
+    columnas = len(datos[0])
+
+    # Validar consistencia de columnas
+    for i, fila in enumerate(datos):
+        if len(fila) != columnas:
             raise ValueError(
-                f"La matriz no es cuadrada: fila {i+1} tiene {len(fila)} columnas "
-                f"pero se esperaban {n} (hay {n} filas)."
+                f"Fila {i+1} tiene {len(fila)} elementos pero fila 1 tiene {columnas}."
             )
-    return A, b, n
+
+    # Detectar formato
+    if columnas == n:
+        # Matriz cuadrada N×N (usar como A, pedir b después)
+        A = datos
+        b = None
+        formato = "cuadrada"
+    elif columnas == n + 1:
+        # Matriz aumentada N×(N+1), separar en A y b
+        A = [fila[:-1] for fila in datos]
+        b = [fila[-1] for fila in datos]
+        formato = "aumentada"
+    else:
+        raise ValueError(
+            f"Formato no reconocido: {n} filas y {columnas} columnas.\n"
+            f"Esperado: matriz {n}×{n} (cuadrada) o {n}×{n+1} (aumentada)."
+        )
+
+    return A, b, n, formato
 
 
 if __name__ == "__main__":
@@ -127,11 +140,25 @@ if __name__ == "__main__":
                 nombre = input("Nombre del archivo (ej: Matriz.txt): ").strip()
                 ruta = os.path.join(directorio, nombre)
                 try:
-                    A, b, n = cargar_desde_archivo(ruta)
-                    print(f"\n✓ Archivo cargado correctamente ({n}x{n} con vector b incluido).")
+                    A, b, n, formato = cargar_desde_archivo(ruta)
+                    print(f"\nArchivo cargado: matriz {n}×{n} (formato {formato})")
                     print("\nMatriz A:")
                     for fila in A:
                         print(fila)
+                    
+                    # Si es matriz cuadrada pura, pedir vector b
+                    if b is None:
+                        print("\nIngrese el vector b:")
+                        b = []
+                        for i in range(n):
+                            while True:
+                                try:
+                                    valor = float(input(f"b[{i}] = "))
+                                    b.append(valor)
+                                    break
+                                except ValueError:
+                                    print("Error: Ingrese un número válido.")
+                    
                     print("\nVector b:", b)
                     break
                 except FileNotFoundError:

@@ -95,7 +95,60 @@ def leer_matriz_manual():
 
 
 # -----------------------------------
-# VALIDAR MATRIZ
+# CARGAR MATRIZ DESDE ARCHIVO
+# -----------------------------------
+def cargar_desde_archivo(nombre_archivo):
+    datos = []
+    try:
+        with open(nombre_archivo, "r") as archivo:
+            for num_linea, linea in enumerate(archivo, start=1):
+                linea = linea.strip()
+                if not linea:
+                    continue
+                fila_texto = linea.split()
+                try:
+                    fila = [convertir_numero(x) for x in fila_texto]
+                except ValueError:
+                    raise ValueError(f"Línea {num_linea}: valor no numérico")
+                if fila:
+                    datos.append(fila)
+    except FileNotFoundError:
+        print("Error: archivo no encontrado.")
+        return None, None
+    
+    if not datos:
+        print("Error: el archivo está vacío.")
+        return None, None
+    
+    n = len(datos)
+    columnas = len(datos[0])
+    
+    # Validar que todas las filas tengan el mismo número de columnas
+    for i, fila in enumerate(datos):
+        if len(fila) != columnas:
+            print(f"Error: Fila {i+1} tiene {len(fila)} elementos pero fila 1 tiene {columnas}.")
+            return None, None
+    
+    # Detectar formato
+    if columnas == n:
+        # Matriz cuadrada N×N
+        A = datos
+        b = None
+        formato = "cuadrada"
+    elif columnas == n + 1:
+        # Matriz aumentada N×(N+1)
+        A = [fila[:-1] for fila in datos]
+        b = [fila[-1] for fila in datos]
+        formato = "aumentada"
+    else:
+        print(f"Error: Formato no reconocido ({n} filas y {columnas} columnas).")
+        print(f"Esperado: {n}×{n} (cuadrada) o {n}×{n+1} (aumentada).")
+        return None, None
+    
+    return (A, b, formato), True
+
+# -----------------------------------
+# VALIDAR MATRIZ AUMENTADA
 # -----------------------------------
 def validar_matriz(A):
     if A is None or len(A) == 0:
@@ -190,9 +243,33 @@ opcion = input("\nIngrese 1 o 2: ")
 
 if opcion == "1":
     nombre_archivo = input("\nIngrese el nombre del archivo: ")
-    A = leer_matriz_desde_archivo(nombre_archivo)
+    resultado = cargar_desde_archivo(nombre_archivo)
+    
+    if resultado[1]:  # Si hubo éxito
+        A, b, formato = resultado[0]
+        
+        if b is None:
+            # Matriz cuadrada, convertirla a aumentada
+            n = len(A)
+            print(f"\nMatriz {n}×{n} cargada (formato {formato}).")
+            print("Ingrese el vector b:")
+            b = []
+            for i in range(n):
+                while True:
+                    try:
+                        valor = float(input(f"b[{i}] = "))
+                        b.append(valor)
+                        break
+                    except ValueError:
+                        print("Error: Ingrese un número válido.")
+            # Crear matriz aumentada
+            A = [A[i] + [b[i]] for i in range(n)]
+        else:
+            print(f"\nMatriz aumentada {n}×{n+1} cargada (formato {formato}).")
+    else:
+        opcion = "2"  # Si falla, cambiar a ingreso manual
 
-elif opcion == "2":
+if opcion == "2":
     A = leer_matriz_manual()
 
 else:
