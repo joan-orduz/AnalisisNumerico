@@ -1,5 +1,4 @@
 #import sympy as sp
-
 def factorizacion_LU(A):
     n = len(A)
     
@@ -39,7 +38,6 @@ def factorizacion_LU(A):
     
     return L, U, P, False
 
-
 def sustitucion_progresiva(L, b):
     n = len(L)
     y = [0]*n
@@ -49,7 +47,6 @@ def sustitucion_progresiva(L, b):
         y[i] = b[i] - suma
     
     return y
-
 
 def sustitucion_regresiva(U, y):
     n = len(U)
@@ -63,50 +60,127 @@ def sustitucion_regresiva(U, y):
     
     return x
 
-
 def multiplicar_matriz_vector(P, b):
     return [sum(P[i][j]*b[j] for j in range(len(b))) for i in range(len(b))]
 
+# ─────────────────────────────────────────────
+# NUEVA FUNCIÓN: carga matriz y vector desde archivo
+# Formato esperado del archivo:
+#   - Cada fila de la matriz A ocupa una línea con n números separados por espacios.
+#   - La última columna de cada fila se interpreta como el término independiente b.
+#   Ejemplo (sistema 3x3):
+#       2  1 -1  8
+#      -3 -1  2 -11
+#      -2  1  2  -3
+# ─────────────────────────────────────────────
+def cargar_desde_archivo(ruta):
+    A = []
+    b = []
+    with open(ruta, "r") as f:
+        for numero_linea, linea in enumerate(f, start=1):
+            linea = linea.strip()
+            if not linea:          # ignorar líneas vacías
+                continue
+            try:
+                valores = [float(v) for v in linea.split()]
+            except ValueError:
+                raise ValueError(
+                    f"Línea {numero_linea}: se encontró un valor no numérico → '{linea}'"
+                )
+            if len(valores) < 2:
+                raise ValueError(
+                    f"Línea {numero_linea}: se necesitan al menos 2 valores (coeficientes + término independiente)."
+                )
+            A.append(valores[:-1])   # todo menos el último → fila de A
+            b.append(valores[-1])    # último valor         → componente de b
+
+    if not A:
+        raise ValueError("El archivo está vacío o no contiene datos válidos.")
+
+    n = len(A)
+    for i, fila in enumerate(A):
+        if len(fila) != n:
+            raise ValueError(
+                f"La matriz no es cuadrada: fila {i+1} tiene {len(fila)} columnas "
+                f"pero se esperaban {n} (hay {n} filas)."
+            )
+    return A, b, n
 
 if __name__ == "__main__":
     try:
-        print("Ingrese la matriz A:")
+        # ── Elegir modo de ingreso ──────────────────────────────────────────
+        print("¿Cómo desea ingresar la matriz?")
+        print("  1. Desde un archivo de texto")
+        print("  2. Manualmente por teclado")
         
-        # Validar tamaño
         while True:
-            try:
-                n = int(input("Número de filas/columnas: "))
-                if n <= 0:
-                    print("Error: Debe ser positivo.")
-                    continue
+            opcion = input("Opción (1/2): ").strip()
+            if opcion in ("1", "2"):
                 break
-            except ValueError:
-                print("Error: Ingrese un entero válido.")
-        
-        A = []
-        for i in range(n):
-            fila = []
-            for j in range(n):
+            print("Error: ingrese 1 o 2.")
+
+        # ── Modo 1: desde archivo ───────────────────────────────────────────
+        if opcion == "1":
+            import os
+            directorio = os.getcwd()
+            print(f"(Los archivos se buscan en: {directorio})")
+            while True:
+                nombre = input("Nombre del archivo (ej: Matriz.txt): ").strip()
+                ruta = os.path.join(directorio, nombre)
+                try:
+                    A, b, n = cargar_desde_archivo(ruta)
+                    print(f"\n✓ Archivo cargado correctamente ({n}x{n} con vector b incluido).")
+                    print("\nMatriz A:")
+                    for fila in A:
+                        print(fila)
+                    print("\nVector b:", b)
+                    break
+                except FileNotFoundError:
+                    print(f"\nError: No se encontró '{nombre}' en {directorio}")
+                    print("Verifique que el archivo esté en la misma carpeta que el .py e intente de nuevo.\n")
+                except ValueError as e:
+                    print(f"\nError en el archivo: {e}")
+                    print("Corrija el archivo o ingrese otra ruta e intente de nuevo.\n")
+
+        # ── Modo 2: ingreso manual (código original intacto) ────────────────
+        else:
+            print("\nIngrese la matriz A:")
+            
+            while True:
+                try:
+                    n = int(input("Número de filas/columnas: "))
+                    if n <= 0:
+                        print("Error: Debe ser positivo.")
+                        continue
+                    break
+                except ValueError:
+                    print("Error: Ingrese un entero válido.")
+            
+            A = []
+            for i in range(n):
+                fila = []
+                for j in range(n):
+                    while True:
+                        try:
+                            val = float(input(f"A[{i}][{j}] = "))
+                            fila.append(val)
+                            break
+                        except ValueError:
+                            print("Error: Número inválido.")
+                A.append(fila)
+            
+            print("\nIngrese el vector b:")
+            b = []
+            for i in range(n):
                 while True:
                     try:
-                        val = float(input(f"A[{i}][{j}] = "))
-                        fila.append(val)
+                        val = float(input(f"b[{i}] = "))
+                        b.append(val)
                         break
                     except ValueError:
                         print("Error: Número inválido.")
-            A.append(fila)
-        
-        print("\nIngrese el vector b:")
-        b = []
-        for i in range(n):
-            while True:
-                try:
-                    val = float(input(f"b[{i}] = "))
-                    b.append(val)
-                    break
-                except ValueError:
-                    print("Error: Número inválido.")
-        
+
+        # ── Factorización y resolución (lógica original, sin cambios) ───────
         print("\nFactorizando A = P⁻¹LU ...")
         
         L, U, P, singular = factorizacion_LU(A)
