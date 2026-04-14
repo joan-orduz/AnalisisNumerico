@@ -247,10 +247,10 @@ if opcion == "1":
     
     if resultado[1]:  # Si hubo éxito
         A, b, formato = resultado[0]
-        
+        n = len(A)
         if b is None:
             # Matriz cuadrada, convertirla a aumentada
-            n = len(A)
+            
             print(f"\nMatriz {n}×{n} cargada (formato {formato}).")
             print("Ingrese el vector b:")
             b = []
